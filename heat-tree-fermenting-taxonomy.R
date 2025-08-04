@@ -26,5 +26,3 @@ heat_tree(
     node_label_size_range = c(0.02, 0.03),
     node_size_interval = c(10, 100),
     layout = "davidson-harel")
-
-
