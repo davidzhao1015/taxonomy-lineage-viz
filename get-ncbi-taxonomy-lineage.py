@@ -6,7 +6,7 @@ import pandas as pd
 #--- Define a function to get taxonomy lineage for a given genus ---
 
 def get_taxonomy_lineage(genus):
-    """Fetches the taxonomy lineage at genus level from the NCBI taxonomy database.
+    """Fetches complete taxonomy lineage based on the known genus level (the highest resolution available) from the NCBI taxonomy database.
 
     Args:
         genus (str): The genus name to search for in the NCBI taxonomy database.
