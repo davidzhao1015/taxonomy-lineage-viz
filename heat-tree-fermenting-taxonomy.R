@@ -9,10 +9,13 @@ taxonomy_data <- read.csv("taxonomy_table.csv")
 head(taxonomy_data)
 
 
+# Count unique Species_label
+length(unique(taxonomy_data$Species_label)) # 36 spp.
+
 
 
 #--- Integrate count data to taxonomy data ---------------------------
-# Load fermented foods count data
+# --- Preprocess abundance data and taxonomy data ---
 count_data <- read.csv("abundance_table.csv", row.names = 1)
 head(count_data)
 count_data2 <- count_data[1,]
@@ -28,32 +31,71 @@ count_data3$Species_label <- rownames(count_data3)
 rownames(count_data3) <- NULL
 head(count_data3)
 
+length(unique(count_data3$Species_label)) # 36 spp.
+
 # Rename Fermented foods1 to count
-colnames(count_data3)[1] <- "count"
+colnames(count_data3)[1] <- "fermented_food_freq"
 
 # Merge taxonomy data into count data by the column Species_label
 count_data4 <- merge(count_data3, taxonomy_data, by = "Species_label", all.x = TRUE)
+
 print(count_data4)
 
-# --- Parse taxonomy data
-tax_data <- parse_tax_data(
-    count_data4, 
-    class_cols = 3:8,
-    named_by_rank = TRUE
+# Show column names
+colnames(count_data4)
+
+
+
+# --- Parse taxonomy data ---
+obj <- parse_tax_data(count_data4, class_cols = 3:8, named_by_rank = TRUE)
+
+class(obj)
+print(obj)
+
+
+
+
+
+
+# obj$data$tax_data
+
+# obj$data$tax_occ <- obj$data$tax_data[,c(1,3)]
+# print(obj$data$tax_occ)
+
+# length(unique(obj$data$tax_occ$taxon_id)) # 36 
+
+
+# print(obj$data$tax_occ$fermented_food_freq)
+
+# named_vec <- setNames(obj$data$tax_occ$fermented_food_freq, obj$data$tax_occ$taxon_id)
+# print(named_vec)
+
+
+# print(obj$n_obs())
+# obj$taxon_names()
+# obj$data$tax_occ$taxon_id
+
+
+
+# --- Draw heat tree ---
+ht_plot_abund <- heat_tree(obj,
+    node_label = obj$taxon_names(),
+    node_size = named_vec,
+    # node_color = named_vec,
+    node_color_range = c("yellow", "green", "cyan"),
+    initial_layout = "reingold-tilford",
+    layout = "davidson-harel",
+    node_color_axis_label = "Number of \nObservations"
 )
 
-class(tax_data)
-print(tax_data)
+ht_plot_abund
 
-# tax_data <- calc_taxon_abund(
-#   tax_data,
-#   data = "tax_data",    # your abundance data table name
-#   cols = "count"        # the column to roll up
-# )
 
-# print(tax_data)
+
 
 # --- End of the session -----------------------------------------------
+
+
 
 
 
