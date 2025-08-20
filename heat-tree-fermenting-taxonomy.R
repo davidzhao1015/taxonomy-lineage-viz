@@ -13,6 +13,8 @@ head(taxonomy_data)
 
 
 
+
+
 #--- Integrate count data to taxonomy data ---------------------------
 # --- Preprocess abundance data and taxonomy data ---
 count_data <- read.csv("abundance_table.csv", row.names = 1)
@@ -79,64 +81,29 @@ ht_plot_abund
 ggsave("heat_tree_plot_abund.pdf", plot = ht_plot_abund, width = 12, height = 8)
 
 
-
-
-
 # --- End of the session -----------------------------------------------
 
 
 
 
+# --- Alternative: Parse only taxonomy data for plotting ---------------
 
-# tax_data <- parse_tax_data(
-#     taxonomy_data, 
-#     class_cols = 2:7,
-#     named_by_rank = TRUE
-# )
+tax_data <- parse_tax_data(
+    taxonomy_data, 
+    class_cols = 2:7,
+    named_by_rank = TRUE
+)
 
-# class(tax_data)
-# print(tax_data)
-
-# --- Draw heat tree
-# ht_plot <- heat_tree(
-#     tax_data,
-#     node_label = taxon_names,
-#     node_color = n_obs,
-#     node_color_axis_label = "Number of \nObservations",
-#     node_color_digits = 0,
-#     node_size_range = c(0.01, 0.015),
-#     node_color_range = c("yellow", "green", "cyan"),  # better perceptibility
-#     node_label_size_range = c(0.01, 0.03),
-#     node_size_interval = c(1, 50),
-#     background_color = "white",
-#     overlap_avoidance = 5,
-#     initial_layout = "reingold-tilford",
-#     layout = "davidson-harel",
-#     repel_labels = TRUE,
-#     title_size = 0.8
-# )
-
-
-# print(tax_data$data$tax_data$count)
+class(tax_data)
+print(tax_data)
 
 # --- Simple heat tree ---
 set.seed(123)
-ht_plot_simple <- heat_tree(
-    tax_data,
-    node_label = taxon_names,
-    node_color = tax_data$data$tax_data$count,
-    # node_size = tax_data$data$tax_data$count,
-    node_color_range = c("yellow", "green", "cyan"),
-    initial_layout = "reingold-tilford",
-    layout = "davidson-harel",
-    node_color_axis_label = "Number of \nObservations"
-)
 
 ht_plot_simple <- heat_tree(
     tax_data,
     node_label = taxon_names,
     node_color = n_obs,
-    # node_size = tax_data$data$tax_data$count,
     node_color_range = c("yellow", "green", "cyan"),
     initial_layout = "reingold-tilford",
     layout = "davidson-harel",
@@ -146,11 +113,6 @@ ht_plot_simple <- heat_tree(
 ht_plot_simple
 
 # Save the plot
-# Finding: the legend's position is not adjustable; and tile size of legend is hard to manage.
-ggsave("heat_tree_plot_count.pdf", plot = ht_plot_simple, width = 12, height = 8)
+ggsave("heat_tree_plot_taxonomy_only.pdf", plot = ht_plot_simple, width = 12, height = 8)
 
-
-
-
-#--- Example data ---
-# load("filtered_data.RData")
+# --- Ending ---
