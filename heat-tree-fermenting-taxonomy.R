@@ -1,59 +1,63 @@
+# Load libraries
 library(metacoder)
 library(ggplot2)
 library(tibble)
 
-# Load the taxonomy data in csv format
+
+
+# --- Load the taxonomy data in csv format ---
 taxonomy_data <- read.csv("taxonomy_table.csv")
 
-# Inspect first few rows of the data
-head(taxonomy_data)
-
-# Count unique Species_label
-# length(unique(taxonomy_data$Species_label)) # 36 spp.
+head(taxonomy_data) # Inspect first few rows of the data
 
 
 
+#--- Method 1: Integrate count data to taxonomy data ---------------------------
+
+# # --- Preprocess abundance data and taxonomy data ---
+# count_data <- read.csv("abundance_table.csv", row.names = 1)
+# head(count_data)
+# count_data2 <- count_data[1,]
+# head(count_data2)
+
+# # Transpose count_data2
+# count_data3 <- t(count_data2)
+# head(count_data3)
+
+# # Make row name as a column, Species_label
+# count_data3 <- as.data.frame(count_data3)
+# count_data3$Species_label <- rownames(count_data3)
+# rownames(count_data3) <- NULL
+# head(count_data3)
+
+# # length(unique(count_data3$Species_label)) # 36 spp.
 
 
-#--- Integrate count data to taxonomy data ---------------------------
-# --- Preprocess abundance data and taxonomy data ---
-count_data <- read.csv("abundance_table.csv", row.names = 1)
-head(count_data)
-count_data2 <- count_data[1,]
-head(count_data2)
+# # Normalize freq data into relative proportions
+# count_data3$normalized_prop <- count_data3$"Fermented foods1" / 115
 
-# Transpose count_data2
-count_data3 <- t(count_data2)
-head(count_data3)
+# range(count_data3$normalized_prop)
 
-# Make row name as a column, Species_label
-count_data3 <- as.data.frame(count_data3)
-count_data3$Species_label <- rownames(count_data3)
-rownames(count_data3) <- NULL
-head(count_data3)
+# # Rename Fermented foods1 to count
+# colnames(count_data3)[1] <- "fermented_food_freq"
 
-# length(unique(count_data3$Species_label)) # 36 spp.
+# # Merge taxonomy data into count data by the column Species_label
+# count_data4 <- merge(count_data3, taxonomy_data, by = "Species_label", all.x = TRUE)
+# print(count_data4)
 
+# # Show column names
+# # colnames(count_data4)
 
-# Normalize freq data into relative proportions
-count_data3$normalized_prop <- count_data3$"Fermented foods1" / 115
-
-range(count_data3$normalized_prop)
-
-# Rename Fermented foods1 to count
-colnames(count_data3)[1] <- "fermented_food_freq"
-
-# Merge taxonomy data into count data by the column Species_label
-count_data4 <- merge(count_data3, taxonomy_data, by = "Species_label", all.x = TRUE)
-print(count_data4)
-
-# Show column names
-# colnames(count_data4)
+# # Save count_data4
+# write.csv(count_data4, file="tax_abund_data.csv", row.names=FALSE)
 
 
+# Read in tax_abund_data.csv
+tax_abund <- read.csv("tax_abund_data.csv")
+head(tax_abund)
 
 # --- Parse taxonomy data ---
-obj <- parse_tax_data(count_data4, class_cols = 4:9, named_by_rank = TRUE)
+obj <- parse_tax_data(tax_abund, class_cols = 4:9, named_by_rank = TRUE)
 
 class(obj)
 print(obj)
@@ -67,18 +71,83 @@ print(obj)
 # --- Draw heat tree ---
 set.seed(123)
 
-ht_plot_abund <- heat_tree(obj,
+ht_plot_abund2 <- heat_tree(obj,
     node_label = obj$taxon_names(),
     node_size = obj$data$tax_abund$normalized_prop,
     node_color = obj$data$tax_abund$normalized_prop,
-    node_color_range = c("yellow", "green", "cyan"),
+    node_color_range = c("purple", "yellow", "red"),
     initial_layout = "reingold-tilford",
     layout = "davidson-harel",
-    node_color_axis_label = "Number of \nObservations"
+    node_color_axis_label = "Prop in \nFermented Foods"
+)
+
+ht_plot_abund2
+
+
+
+ht_plot_abund <- heat_tree(obj,
+    node_label = obj$taxon_names(),
+    node_color = obj$n_obs(),
+    node_color_range = c("purple", "yellow", "red"),
+    initial_layout = "reingold-tilford",
+    layout = "davidson-harel",
+    node_color_axis_label = "Number of genera \nwithin the taxa"
 )
 
 ht_plot_abund
+
 ggsave("heat_tree_plot_abund.pdf", plot = ht_plot_abund, width = 12, height = 8)
+
+
+
+
+
+ht_plot_abund3 <- obj %>% 
+    filter_taxa(taxon_ranks != "Genus") %>%
+    heat_tree(node_label = taxon_names,
+    node_color = n_obs,
+    node_color_range = c("purple", "yellow", "red"),
+    initial_layout = "reingold-tilford",
+    layout = "davidson-harel",
+    node_color_axis_label = "Number of \ngenera within")
+
+ht_plot_abund3
+
+
+
+
+obj_fam <- filter_taxa(
+  obj,
+  taxon_ranks %in% c("Family", "Genus"),
+  subtaxa   = TRUE,
+  supertaxa = TRUE
+)
+
+ht_plot_abund4 <- heat_tree(obj_fam,
+    node_label = taxon_names,
+    node_color = n_obs,
+    node_color_range = c("purple", "yellow", "red"),
+    initial_layout = "reingold-tilford",
+    layout = "davidson-harel",
+    node_color_axis_label = "Number of genera \nwithin the taxa"
+)
+
+ht_plot_abund4
+
+
+
+# heat_tree_subset <- tax_data %>%
+#     filter_taxa(taxon_ranks != "Genus") %>%
+#     heat_tree(
+#     node_label = taxon_names,
+#     node_color = n_obs,
+#     node_color_range = c("purple", "yellow", "red"),
+#     # initial_layout = "reingold-tilford",
+#     layout = "davidson-harel",
+#     node_color_axis_label = "Number of genera within"
+# )
+
+# heat_tree_subset
 
 
 # --- End of the session -----------------------------------------------
@@ -86,7 +155,7 @@ ggsave("heat_tree_plot_abund.pdf", plot = ht_plot_abund, width = 12, height = 8)
 
 
 
-# --- Alternative: Parse only taxonomy data for plotting ---------------
+# --- Method 2: Parse only taxonomy data for plotting ---------------
 
 tax_data <- parse_tax_data(
     taxonomy_data, 
@@ -100,19 +169,32 @@ print(tax_data)
 # --- Simple heat tree ---
 set.seed(123)
 
-ht_plot_simple <- heat_tree(
-    tax_data,
+heat_tree_subset <- tax_data %>%
+    filter_taxa(taxon_ranks != "Genus") %>%
+    heat_tree(
     node_label = taxon_names,
     node_color = n_obs,
-    node_color_range = c("yellow", "green", "cyan"),
-    initial_layout = "reingold-tilford",
+    node_color_range = c("purple", "yellow", "red"),
+    # initial_layout = "reingold-tilford",
     layout = "davidson-harel",
-    node_color_axis_label = "Number of \nObservations"
+    node_color_axis_label = "Number of genera within"
 )
+
+heat_tree_subset
+
+# ht_plot_simple <- heat_tree(
+#     tax_data,
+#     node_label = taxon_names,
+#     node_color = n_obs,
+#     node_color_range = c("yellow", "green", "cyan"),
+#     initial_layout = "reingold-tilford",
+#     layout = "davidson-harel",
+#     node_color_axis_label = "Number of \nObservations"
+# )
 
 ht_plot_simple
 
 # Save the plot
-ggsave("heat_tree_plot_taxonomy_only.pdf", plot = ht_plot_simple, width = 12, height = 8)
-
+ggsave("heat_tree_plot_taxonomy_subset.pdf", plot = heat_tree_subset, width = 15, height = 8)
+     
 # --- Ending ---
